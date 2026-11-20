@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hexacrown</title>
+<meta name="description" content="Jeu de stratégie hexagonal : capturez le Roi ou dominez le trône.">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1b202b">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hexacrown"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--bg:#1b202b;--fg:#e8ecf4;--card:#262d3b;--mut:#9aa4b8;--acc:#fbbf24;--bd:#3a4357;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b202b;--fg:#e8ecf4;--card:#262d3b;--mut:#9aa4b8;--acc:#fbbf24;--bd:#3a4357}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 4px}h1{margin:0;font-size:22px;letter-spacing:.14em}
+header p{margin:2px 0 0;color:var(--mut);font-size:13px}
+main{display:flex;flex-wrap:wrap;gap:14px;padding:10px 16px 24px;max-width:1180px;margin:auto}
+#bw{flex:1 1 440px;min-width:300px}#side{flex:1 1 260px;display:flex;flex-direction:column;gap:10px}
+svg{width:100%;height:auto;display:block;user-select:none}
+.card{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.card h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+button,select{touch-action:manipulation;min-height:36px;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.on{background:var(--acc);color:#1b202b;border-color:var(--acc)}button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hx{stroke:#2a3142;stroke-width:2.5}@keyframes pl{0%,100%{opacity:1}50%{opacity:.5}}.gl{animation:pl 1.3s ease-in-out infinite}
+body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+#tb{font-size:14px;margin:0 0 6px;line-height:1.35}#tb div{font-size:12px;color:var(--mut)}
+@media (min-width:900px){#tb{display:none}}
+@media (pointer:coarse){button{min-height:42px;padding:8px 13px}label{padding:6px 0}input[type=checkbox]{width:20px;height:20px;vertical-align:-4px}}
+@media (max-width:600px){header{padding:8px 12px 0}header h1{font-size:18px}header p{display:none}main{padding:6px 8px 20px;gap:10px}#bw{min-width:0}}
+@media (orientation:landscape) and (max-height:520px){header{display:none}#tb{display:block;font-size:13px;margin:0 0 4px}#tb div{display:none}main{flex-wrap:nowrap;padding:6px;gap:8px;align-items:flex-start}#bw{flex:1 1 56%;min-width:0;padding-bottom:4px}#bd{max-height:calc(100vh - 36px);width:auto;max-width:100%;margin:0 auto}#side{flex:1 1 40%;min-width:230px;max-height:calc(100vh - 12px);overflow:auto}}
+.n{fill:#e6e9f0}.m{fill:#f3b84b}.p{fill:#62d2a2}.s{fill:#b48cf2}.d{fill:#7fd0e6}
+.ct{stroke:var(--acc);stroke-width:2.5;stroke-dasharray:5 3}
+.sl{stroke:var(--acc);stroke-width:4}
+.ct2{font-size:13px;font-weight:600;fill:#1b202b;text-anchor:middle;opacity:.8;pointer-events:none}
+.lg{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:13px}.lg b{font-weight:600}
+#log{font-size:12.5px;color:var(--mut);max-height:150px;overflow:auto}#log div{padding:1px 0}
+#st{font-weight:600}.win{color:var(--acc)}
+html,body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}:root{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}#log{user-select:text}
+</style></head><body>
+<header><h1>HEXACROWN</h1><p>Un terrain qui calcule. Capturez le Roi adverse, ou dominez le centre.</p></header>
+<div id="ts" style="position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fbbf24;color:#1b202b;padding:9px 15px;border-radius:10px;font-weight:600;font-size:14px;display:none;z-index:9;max-width:90vw;text-align:center"></div><div id="mo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;align-items:center;justify-content:center;padding:16px"><div class="card" style="max-width:340px;text-align:center"><div id="mt" style="margin-bottom:12px;font-weight:600"></div><div class="row" style="justify-content:center"><button id="my" class="on">Oui, recommencer</button><button id="mn">Non, garder la partie</button></div></div></div><svg id="ics" width="0" height="0" style="position:absolute"></svg><main>
+<div id="bw"><div id="tb"></div><div id="eb" style="display:none"></div><svg id="bd" viewBox="-292 -258 584 516"></svg></div>
+<div id="side"><div class="card"><h3>Mode</h3><div class="row" id="md"></div><div class="row" id="lv" style="margin-top:6px"></div><div class="row" id="mv" style="margin-top:6px"></div><div class="row" style="margin-top:8px;font-size:13px;gap:14px"><label><input type="checkbox" id="cbBar" data-a="bar"> Barre d’avantage</label><label><input type="checkbox" id="cbHelp" checked data-a="help"> Aide stratégique</label><label><input type="checkbox" id="cbSup" checked data-a="sup"> Soutien d’équipe</label></div><div id="coach" style="display:none;font-size:13px;margin-top:8px"></div></div>
+<div class="card"><div id="st"></div><div id="info" style="color:var(--mut);font-size:13px;margin-top:4px"></div></div>
+<div class="card" id="hp" style="display:none"></div><div class="card"><h3>Actions</h3><div class="row" id="act"></div></div>
+<div class="card"><h3>Victoire</h3><div id="vic" style="font-size:13px"></div></div>
+<div class="card"><h3>Journal</h3><div id="log"></div></div>
+<div class="card"><h3>Légende</h3><div class="lg" id="lg"></div></div>
+<div class="row"><button id="nw">Nouvelle partie</button><button id="rv">Revanche (même terrain)</button><button id="dj">Terrain du jour</button><button id="un">Annuler le coup</button></div>
+</div></main>
+<script>
+const D=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]],S=34,R3=Math.sqrt(3);
+const T={n:["Neutre","","Aucun changement"],m:["Multiplicateur","×","Multiplie la valeur par 2 ou 3"],p:["Additionneur","+","Ajoute 1 à 4"],s:["Soustracteur","−","Retire 1 à 4"],d:["Diviseur","÷","Divise par 2 ou 3 (arrondi inférieur)"]};
+const PT={Roi:{b:6,r:0,s:"No"},Architecte:{b:1,r:1,s:"Ar"},Titan:{b:8,r:1,s:"Ti"},Gardien:{b:5,r:1,s:"Ga"},Assassin:{b:3,r:2,s:"As",line:1},Eclaireur:{b:2,r:3,s:"Éc"},Arcaniste:{b:4,r:2,s:"Ac"}};
+const CEN=["0,0","1,0","1,-1","0,-1","-1,0","-1,1","0,1"],NAME=["Bleus","Rouges"];
+let B,P,turn,ply,sel,mode,pick,log,win,dom,id,ai=true,aiAct=0,train=0,hint=null,ls=0,seed=0,RN=Math.random,hist=[],lost=[[],[]],last=null,lvl=1,bar=0,help=1,sup=1,uni=1,ver=0,advT=0,barK=-1,barV=0,evH=[],advV=-1,advC=null;
+const k=(q,r)=>q+","+r,cell=(q,r)=>B[k(q,r)],at=(q,r)=>P.find(p=>p.q==q&&p.r==r);
+const mb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const sh=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(RN()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const nbp=p=>D.map(([a,b])=>at(p.q+a,p.r+b)).filter(Boolean);
+function init(sd){seed=sd==null?Math.floor(Math.random()*1e6):sd;RN=mb(seed);ver++;evH=[];hist=[];lost=[[],[]];last=null;
+  const mkc=t=>({t,n:t=="m"?2+(RN()<.4?1:0):t=="d"?2+(RN()<.35?1:0):t=="n"?0:1+Math.floor(RN()*4)});
+  B={};const pool=sh([..."nnmmpppsssdd"]);
+  for(let q=-4;q<=4;q++)for(let r=-4;r<=4;r++)if(Math.abs(q+r)<=4&&!B[k(q,r)]){const c=(q==0&&r==0||Math.abs(r)>1)?mkc("n"):mkc(pool.pop());B[k(q,r)]={q,r,t:c.t,n:c.n};if(q||r)B[k(-q,-r)]={q:-q,r:-r,t:c.t,n:c.n}}
+ const wc=[[-4,4],[-3,4],[-2,4],[-1,4],[0,4],[-3,3],[-2,3],[-1,3],[0,3],[-1,2],[0,2],[1,2]];
+ const wt=["Eclaireur","Arcaniste","Roi","Arcaniste","Eclaireur","Gardien","Architecte","Eclaireur","Gardien","Assassin","Titan","Assassin"];
+ P=[];id=0;wc.forEach(([q,r],i)=>P.push({id:id++,t:wt[i],o:0,q,r,mod:0,ttl:0}));
+ const rest=sh(wt.filter(t=>t!="Roi"));
+ wc.forEach(([q,r],i)=>P.push({id:id++,t:wt[i]=="Roi"?"Roi":rest.pop(),o:1,q:-q,r:-r,mod:0,ttl:0}));
+ turn=0;ply=0;sel=null;mode="move";pick="a";log=[];win=null;dom=[0,0];hint=null;
+ say("Les Bleus (ordre) commencent. Cases magiques au centre, camps neutres ; terrain symétrique, différent à chaque partie.");draw();
+}
+const prog=p=>p.t=="Roi"?0:Math.max(0,p.o==0?-p.r:p.r);
+function detail(p){const g=prog(p),c=cell(p.q,p.r);return "base "+PT[p.t].b+(g?" + progression "+g:"")+" | "+(c.t=="n"?"Neutre":T[c.t][0]+" "+T[c.t][1]+c.n)+(p.inv>0?" | inversé (±)":"")+" → "+val(p)}
+function val(p){let v=PT[p.t].b+prog(p);const c=cell(p.q,p.r);
+ if(c.t=="m")v*=c.n;else if(c.t=="p")v+=c.n;else if(c.t=="s")v-=c.n;else if(c.t=="d")v=Math.floor(v/c.n);return p.inv>0?-v:v}
+function reach(p){const o=[],d=uni?{r:p.t=="Roi"?0:2}:PT[p.t];if(!d.r)return o;
+ if(d.line){for(const[a,b]of D)for(let s=1;s<=d.r;s++){const q=p.q+a*s,r=p.r+b*s;if(!cell(q,r))break;const x=at(q,r);if(x){if(x.o!=p.o)o.push({q,r,a:1});break}o.push({q,r})}return o}
+ const seen={[k(p.q,p.r)]:1};let f=[[p.q,p.r]];
+ for(let s=0;s<d.r;s++){const nf=[];for(const[q0,r0]of f)for(const[a,b]of D){const q=q0+a,r=r0+b,kk=k(q,r);if(!cell(q,r)||seen[kk])continue;seen[kk]=1;const x=at(q,r);if(x){if(x.o!=p.o)o.push({q,r,a:1});continue}o.push({q,r});nf.push([q,r])}f=nf}return o}
+const adj=(x,o,ex)=>sup?Math.min(2,nbp(x).filter(y=>y.o==o&&y!==ex).length):0;
+const atkP=(p,x)=>val(p)+adj(x,p.o,p);
+const defP=x=>val(x)+adj(x,x.o,x);
+function say(s){log.unshift(s);log=log.slice(0,40)}
+function click(q,r){if(win||(ai&&turn==1&&!aiAct))return;const p=at(q,r),s=P.find(x=>x.id===sel);
+ if(mode=="arch"&&s&&p&&p!==s&&p.t!="Roi"&&dist(q,r,s)==1){snap();p.inv=3;say(`${NAME[turn]} : l’Architecte inverse le signe de ${p.t} (${p.o==turn?"allié":"adverse"}) pendant 3 actions.`);return end()}
+ if(p&&p.o==turn){sel=p.id;mode="move";return draw()}
+ if(s){const t=reach(s).find(x=>x.q==q&&x.r==r);if(!t)return;snap();
+  if(t.a){const a=atkP(s,p),d=defP(p);
+   if(a>d){say(`${NAME[turn]} : ${s.t} (${a}) capture ${p.t} (${d}).`);lost[p.o].push(p.t);P=P.filter(x=>x!==p);if(p.t=="Roi"){win={w:turn,m:"Roi capturé"}}move(s,q,r)}
+   else if(a<d){say(`${NAME[turn]} : ${s.t} (${a}) est détruit par ${p.t} (${d}).`);lost[turn].push(s.t);last={fr:[s.q,s.r],to:[q,r]};P=P.filter(x=>x!==s)}else say(`${NAME[turn]} : égalité ${a}-${d}, ${s.t} est repoussé.`)}
+  else move(s,q,r);end()}}
+function move(s,q,r){last={fr:[s.q,s.r],to:[q,r]};s.q=q;s.r=r}
+function sumC(o){return P.filter(p=>p.o==o&&CEN.includes(k(p.q,p.r))).reduce((a,p)=>a+val(p),0)}
+function end(){ver++;ply++;P.forEach(p=>{if(p.ttl&&--p.ttl==0)p.mod=0;if(p.inv)p.inv--});
+ if(ply%8==0){const fr=sh(Object.values(B).filter(c=>Math.abs(c.r)<=1&&!at(c.q,c.r)));if(fr.length>1){const a=fr[0],b=fr[1];[a.t,b.t]=[b.t,a.t];[a.n,b.n]=[b.n,a.n];say("Deux cases libres échangent leur effet.")}}
+ if(!win){const o=turn;dom[o]=P.filter(p=>p.o==o&&CEN.includes(k(p.q,p.r))).length>=4?dom[o]+1:0;
+  if(dom[o]>=2)win={w:o,m:"Domination du centre"};
+  else for(const x of [o,1-o])if(sumC(x)>40){win={w:x,m:"Surcharge (>40)"};break}}
+ if(!win&&ply>=80){const a=P.filter(p=>p.o==0).reduce((x,p)=>x+val(p),0),b=P.filter(p=>p.o==1).reduce((x,p)=>x+val(p),0);win={w:a>b?0:b>a?1:turn,m:`fin aux points (${a} – ${b})`}}
+  if(win){say("★ Victoire des "+NAME[win.w]+" : "+win.m);rec()}
+ turn=1-turn;sel=null;mode="move";hint=null;if(!win&&!moves(turn).length){win={w:1-turn,m:"plus aucun coup possible"};say("★ Victoire des "+NAME[win.w]+" : "+win.m);rec()}draw();if(ai&&turn==1&&!win)setTimeout(aiPlay,450)}
+const HX=r=>[0,1,2,3,4,5].map(i=>{const a=Math.PI/3*i;return (r*Math.cos(a)).toFixed(1)+","+(r*Math.sin(a)).toFixed(1)}).join(" ");
+const mk=(id,f,m,sd,t)=>`<filter id="f${id}" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="${t}" baseFrequency="${f}" numOctaves="4" seed="${sd}"/><feColorMatrix values="${m}"/></filter><pattern id="p${id}" patternUnits="userSpaceOnUse" x="-235" y="-195" width="470" height="390"><rect width="470" height="390" filter="url(#f${id})"/></pattern>`;
+const DEFS="<defs>"+mk("w",".012 .2","1.1 0 0 0 .32 .75 0 0 0 .16 .4 0 0 0 .06 0 0 0 0 1",4,"fractalNoise")+mk("m",".009 .013","-1.5 0 0 0 .98 -1.5 0 0 0 .96 -1.4 0 0 0 .92 0 0 0 0 1",7,"turbulence")+mk("i",".02 .015","-1.2 0 0 0 .98 -1.3 0 0 0 .94 -1.6 0 0 0 .84 0 0 0 0 1",2,"turbulence")+mk("e",".015 .02","0.5 0 0 0 .08 0.5 0 0 0 .08 0.55 0 0 0 .09 0 0 0 0 1",9,"turbulence")+`</defs><polygon points="${HX(224)}" fill="url(#pw)" stroke="#2b1a0c" stroke-width="3"/><polygon points="${HX(213)}" fill="none" stroke="#e0b866" stroke-width="2"/>`;
+const IM={"bGardien":"img/bGardien.png", "wGardien":"img/wGardien.png", "bArchitecte":"img/bArchitecte.png", "wArchitecte":"img/wArchitecte.png", "bTitan":"img/bTitan.png", "wTitan":"img/wTitan.png", "bArcaniste":"img/bArcaniste.png", "wArcaniste":"img/wArcaniste.png", "bEclaireur":"img/bEclaireur.png", "wEclaireur":"img/wEclaireur.png", "bAssassin":"img/bAssassin.png", "wAssassin":"img/wAssassin.png", "bRoi":"img/bRoi.png", "wRoi":"img/wRoi.png"};
+const bp=(x,y,r)=>[0,1,2,3,4,5].map(i=>{const a=Math.PI/180*(60*i-30);return (x+r*Math.cos(a)).toFixed(1)+","+(y+r*Math.sin(a)).toFixed(1)}).join(" ");
+const sy=(n,b)=>`<symbol id="s-${n}" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${b}</symbol>`;
+ics.innerHTML=sy("Gardien",'<path d="M-6-8h12v8q0 6-6 9q-6-3-6-9z"/><path d="M0-11v16M-3-6h6"/>')+sy("Architecte",'<path d="M0-9l-7 17M0-9l7 17M-4 3h8"/><path d="M-10 9h20"/>')+sy("Titan",'<rect x="-6" y="-4" width="12" height="12" rx="3"/><path d="M-2-4v4M2-4v4M-6 1h12"/><path d="M-6-4q0-5 3-5t3 5q0-5 3-5t3 5"/>')+sy("Arcaniste",'<path d="M3-9a9 9 0 1 0 0 18a7 7 0 1 1 0-18z"/><path d="M6-4l.9 2 2.1.2-1.6 1.4.5 2.1-1.9-1.1-1.9 1.1.5-2.1-1.6-1.4 2.1-.2z"/>')+sy("Eclaireur",'<path d="M-4-1q0-7 4-7t4 7v7h-8z"/><path d="M-4 0q-6-2-8-8 4 0 8 3M4 0q6-2 8-8-4 0-8 3"/><path d="M0-11v8"/>')+sy("Assassin",'<path d="M-7-3q1-7 7-7t7 7q-1 8-7 12q-6-4-7-12z"/><path d="M-4 0l4 3 4-3"/><path d="M-11 11l6-6"/>')+sy("Roi",'<path d="M-8 6L-9-4l5 4L0-7l4 7 5-4-1 10z"/><path d="M-7 9h14"/>');
+const DEFS2=`<polygon points="${HX(285)}" fill="#46506a" stroke="#0f131b" stroke-width="3"/><polygon points="${HX(272)}" fill="#232a38"/>`;
+const PROG=[1,2,3,4].map(n=>{const qm=Math.max(-4,-4+n),xw=S*R3*(qm-n/2)-31,qx=Math.min(4,4-n),xb=S*R3*(qx+n/2)+31;return `<text x="${xw}" y="${-S*1.5*n+4}" text-anchor="end" font-size="11" font-weight="700" fill="#e2e8f0">+${n}</text><text x="${xb}" y="${S*1.5*n+4}" font-size="11" font-weight="700" fill="#e2e8f0">+${n}</text>`}).join("");
+function draw(){let h=DEFS2+PROG;const TA=help&&!win?tact(turn):null,Hh=hint||(help&&!win&&!(ai&&turn==1)?advL():null);const s=P.find(x=>x.id===sel),rc=s&&mode=="move"?reach(s):[];
+ for(const c of Object.values(B)){const x=S*R3*(c.q+c.r/2),y=S*1.5*c.r;
+  const pts=[0,1,2,3,4,5].map(i=>{const a=Math.PI/180*(60*i-30);return (x+S*Math.cos(a)).toFixed(1)+","+(y+S*Math.sin(a)).toFixed(1)}).join(" ");
+  const m=rc.find(t=>t.q==c.q&&t.r==c.r),p=at(c.q,c.r);
+  let lab=c.t=="n"?"":T[c.t][1]+c.n;
+  h+=`<g data-k="${k(c.q,c.r)}" style="cursor:pointer"><polygon class="hx ${c.t} ${CEN.includes(k(c.q,c.r))?"ct":""} ${s&&s.q==c.q&&s.r==c.r?"sl":""}" points="${pts}"/>`;
+  h+=`<text class="ct2" x="${x}" y="${y-(p?20:-4)}">${lab}</text>`;
+  if(p){const w=p.o==0,v=val(p),bb=PT[p.t].b;
+   h+=`<title>${p.t} : ${detail(p)}</title><polygon points="${bp(x,y,25.5)}" fill="${w?"#2563eb":"#dc2626"}" stroke="#0f131b" stroke-width="1.5" pointer-events="none"/><image href="${IM[(w?"w":"b")+p.t]}" x="${x-20}" y="${y-23}" width="40" height="46" ${w?'style="filter:drop-shadow(0 0 1.2px #17120e)"':""} pointer-events="none"/><circle cx="${x+16}" cy="${y+17}" r="9" fill="#fffaf0" stroke="#17120e" stroke-width="1.5" pointer-events="none"/><text x="${x+16}" y="${y+21}" text-anchor="middle" font-size="11" font-weight="700" fill="${v>bb?"#15803d":v<bb?"#dc2626":"#17120e"}" pointer-events="none">${v}</text>`;
+   if(p.inv)h+=`<text x="${x-24}" y="${y-14}" font-size="15" font-weight="700" fill="#7c3aed" pointer-events="none">±</text>`;
+   if(p.mod)h+=`<text x="${x+14}" y="${y-12}" font-size="9" fill="var(--acc)" pointer-events="none">${p.mod>0?"+":""}${p.mod}</text>`}
+  if(m){if(m.a){const pp=at(m.q,m.r);h+=`<circle cx="${x}" cy="${y}" r="21" fill="none" stroke="#ef4444" stroke-width="3"/><text x="${x}" y="${y+30}" text-anchor="middle" font-size="10" font-weight="700" fill="#ef4444" pointer-events="none">${atkP(s,pp)} vs ${defP(pp)}</text>`}else h+=`<circle cx="${x}" cy="${y}" r="6" fill="${help?(risk(s,m.q,m.r)?"#f59e0b":"#16a34a"):"var(--acc)"}" pointer-events="none"/>`+(train||help?`<text x="${x}" y="${y+22}" text-anchor="middle" font-size="10" font-weight="700" fill="#2a1d10" pointer-events="none">→${proj(s,m.q,m.r)}</text>`:"")}
+  if((TA||Hh)&&!(ai&&turn==1)){const g=(col,o2,dash)=>`<polygon class="gl" points="${pts}" fill="${col}" fill-opacity="${o2}" stroke="${col}" stroke-width="4.5"${dash?' stroke-dasharray="7 5"':""} pointer-events="none"/>`;
+   if(p&&TA&&TA.th.includes(p))h+=g("#ff2d2d",.4);
+   if(p&&TA&&TA.ch.includes(p))h+=g("#19e06a",.4);
+   if(Hh&&Hh.fr[0]==c.q&&Hh.fr[1]==c.r)h+=g("#ffd21f",.45);
+   if(Hh&&Hh.to[0]==c.q&&Hh.to[1]==c.r)h+=g("#ffd21f",.25,1)}
+   if(mode=="arch"&&s&&p&&p!==s&&p.t!="Roi"&&dist(c.q,c.r,s)==1)h+=`<circle cx="${x}" cy="${y}" r="28" fill="none" stroke="var(--acc)" stroke-width="3" pointer-events="none"/>`;
+   if(last&&((last.to[0]==c.q&&last.to[1]==c.r)||(last.fr[0]==c.q&&last.fr[1]==c.r)))h+=`<polygon points="${pts}" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="4 3" pointer-events="none"/>`;
+   if(Hh&&((Hh.to[0]==c.q&&Hh.to[1]==c.r)||(Hh.fr[0]==c.q&&Hh.fr[1]==c.r)))h+=`<polygon points="${pts}" fill="none" stroke="#facc15" stroke-width="4" pointer-events="none"/>`;h+="</g>"}
+ h+=ARROWS(Hh,TA);bd.innerHTML=h;
+ st.innerHTML=win?`<span class="win">★ Victoire des ${NAME[win.w]} — ${win.m}</span>`:`<i style="display:inline-block;width:13px;height:13px;border-radius:3px;border:1.5px solid #17120e;background:${turn?"#dc2626":"#2563eb"};margin-right:6px;vertical-align:-1px"></i>Tour des ${NAME[turn]}${ai&&turn==1?" (IA)":""} <span style="color:var(--mut);font-weight:400">· action ${ply+1} · terrain #${seed}</span>`;
+ info.textContent=s?`${s.t} : ${detail(s)}`:"Sélectionnez une de vos pièces. Les points = déplacements, les cercles rouges = attaques (A vs D).";
+ let a="";if(s&&!win&&s.t=="Architecte"&&!(ai&&turn==1))a=`<button class="${mode=="arch"?"on":""}" data-a="arch">Inversion : change le signe d’une pièce voisine</button>`;
+ act.innerHTML=a||`<span style="color:var(--mut);font-size:13px">Déplacer ou attaquer : la plus grande valeur réelle l’emporte.${uni?" Mode unifié : toutes les pièces avancent de 1 à 2 cases dans toutes les directions (Roi immobile).":""}</span>`;
+ vic.innerHTML=`Victoire : capture du Roi · Trône (4 cases sur 7) tenu 2 tours : ${dom[0]}/2 vs ${dom[1]}/2<br>Surcharge (&gt;40) : Bleus ${sumC(0)} · Rouges ${sumC(1)}<br>Pertes — Bleus : ${tray(0)} · Rouges : ${tray(1)}<br><span style="color:var(--mut)">${stats()}</span>`;
+  RENDER();lv.innerHTML=ai&&!train?["Facile","Normal","Fort"].map((l,i)=>`<button class="${i==lvl?"on":""}" data-a="lvl" data-v="${i}">${l}</button>`).join(""):"";
+ document.getElementById("log").innerHTML=log.map(l=>`<div>${l}</div>`).join("");
+ md.innerHTML=[["pvp","1 contre 1",!ai],["ia","Contre l’IA",ai&&!train],["train","Entraînement",train]].map(([v,l,on])=>`<button class="${on?"on":""}" data-a="vs" data-v="${v}">${l}</button>`).join("");
+ const cc=document.getElementById("coach");cc.style.display=train?"block":"none";
+ if(train)cc.innerHTML=`<b>Leçon ${ls+1}/${L.length}</b> — ${L[ls]}<div class="row" style="margin-top:6px"><button data-a="ls">Leçon suivante</button><button data-a="advise">Conseil du coach</button></div>`+(hint?`<div style="margin-top:6px;color:var(--acc)"><b>Coach :</b> ${hint.why}</div>`:"")}
+bd.onclick=e=>{const g=e.target.closest("g[data-k]");if(g){const[q,r]=g.dataset.k.split(",").map(Number);click(q,r)}};
+const dist=(q,r,x)=>x?(Math.abs(q-x.q)+Math.abs(r-x.r)+Math.abs(q+r-x.q-x.r))/2:0;
+const px=(q,r)=>[S*R3*(q+r/2),S*1.5*r];
+function ARROWS(H,T){let o="";if(ai&&turn==1)return o;
+ if(T)for(const[e,x]of T.pr){const a=px(e.q,e.r),b=px(x.q,x.r);o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ff2d2d" stroke-width="3" stroke-dasharray="7 5" opacity=".85" pointer-events="none"/>`}
+ if(H){const a=px(...H.fr),b=px(...H.to);o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ffd21f" stroke-width="4.5" stroke-linecap="round" pointer-events="none"/><circle cx="${b[0]}" cy="${b[1]}" r="6" fill="#ffd21f" pointer-events="none"/>`}
+ return o}
+function tact(o){const th=[],ch=[],pr=[];for(const e of P)for(const t of reach(e)){if(!t.a)continue;const x=at(t.q,t.r);if(atkP(e,x)>defP(x)){(e.o==o?ch:th).push(x);if(e.o!=o)pr.push([e,x])}}return{th:[...new Set(th)],ch:[...new Set(ch)],pr}}
+function risk(s,q,r){const a=s.q,b=s.r;s.q=q;s.r=r;let bad=0;const v=val(s);for(const e of P)if(e.o!=s.o&&reach(e).some(t=>t.a&&t.q==q&&t.r==r)&&atkP(e,s)>defP(s))bad=1;s.q=a;s.r=b;return bad}
+function lookahead(o){let best=-1e9;for(const m of moves(o)){const sv=P;P=P.map(x=>({...x}));apply(m);const rs=moves(1-o);let w=rs.length?1e9:ev(o);for(const r of rs){const s2=P;P=P.map(x=>({...x}));apply(r);const e=ev(o);P=s2;if(e<w)w=e}P=sv;if(w>best)best=w}return best==-1e9?ev(o):best}
+function adv(){if(advV!=ver){advV=ver;const m=search(turn,2,0);if(!m)advC=null;else{const s=P.find(x=>x.id==m.s),x=at(m.q,m.r);advC={fr:[s.q,s.r],to:[m.q,m.r],why:m.a?`${s.t} (${val(s)}) attaque ${x.t} (${val(x)})`+(val(s)>val(x)?" : capture.":", à égalité il est repoussé."):`${s.t} va sur une case où il vaudra ${proj(s,m.q,m.r)}.`}}}return advC}
+function setUni(i){if(i==uni)return;ask("uni"+i,()=>{uni=i;LEG();init(seed)},"Changer le type de déplacement relance la partie sur le même terrain. Continuer ?")}
+function RENDER(){tb.innerHTML=st.innerHTML+"<div>"+info.textContent+"</div>";un.disabled=!hist.length;if(ai&&turn==1&&!win)st.innerHTML+=" · <i>l’IA réfléchit…</i>";mv.innerHTML=["Déplacements classiques","Tous 1–2 cases"].map((l,i)=>`<button class="${i==uni?"on":""}" data-a="uni" data-v="${i}">${l}</button>`).join("");eb.style.display=bar?"block":"none";
+ if(bar){if(barK!=ver){barK=ver;barV=lookahead(turn)*(turn?-1:1);evH[ply]=barV}
+  const v=barV,pct=win?(win.w==0?100:0):100/(1+Math.exp(-v/20)),mv=1-turn;let msg=win?"Partie terminée":"Pas encore de coup joué";
+  if(!win&&ply>0&&evH[ply-1]!==undefined){const l=Math.max(0,-(v-evH[ply-1])*(mv==0?1:-1));msg=`Dernier coup (${NAME[mv]}) : ${l<2?"excellent":l<6?"bon":l<12?"imprécis":l<25?"erreur":"gaffe"}${l>=2?" (−"+l.toFixed(1)+")":""}`}
+  const txt=(v>=0?"+":"−")+Math.abs(v).toFixed(1),lead=win?"Victoire "+NAME[win.w]:Math.abs(v)<4?"Équilibre":v>0?"Avantage Bleus "+txt:"Avantage Rouges "+txt;
+  eb.innerHTML=`<div style="display:flex;height:24px;border-radius:7px;overflow:hidden;border:2px solid #0f131b"><div style="width:${pct}%;background:#2563eb;color:#fff;font:700 12px system-ui;padding:4px 7px;white-space:nowrap;overflow:hidden">${pct>=50?lead:""}</div><div style="flex:1;background:#dc2626;color:#fff;font:700 12px system-ui;padding:4px 7px;text-align:right;white-space:nowrap;overflow:hidden">${pct<50?lead:""}</div></div><div style="font-size:12px;color:var(--mut);margin:3px 0 8px">${msg}</div>`}
+ hp.style.display=help?"block":"none";
+ if(help){if(win)hp.innerHTML="";else if(ai&&turn==1)hp.innerHTML="<h3>Aide stratégique</h3>L’IA réfléchit…";else{const o=turn,t2=tact(o),a2=advL(),nm=p=>`${p.t} (${val(p)})`,tc=x=>P.filter(p=>p.o==x&&CEN.includes(k(p.q,p.r))).length,bad=P.filter(p=>p.o==o&&val(p)<PT[p.t].b+prog(p));
+  hp.innerHTML=`<h3>Aide stratégique</h3><div style="font-size:13px;line-height:1.55"><div><b>Coup conseillé</b> (entouré en jaune) : ${a2?a2.why:"calcul…"}</div><div>${t2.th.length?"⚠ <b>Menacées</b> (rouge) : "+t2.th.map(nm).join(", "):"✔ Aucune de vos pièces n’est menacée."}</div><div>${t2.ch.length?"🎯 <b>Captures possibles</b> (vert) : "+t2.ch.map(nm).join(", "):"Pas de capture rentable pour l’instant."}</div><div><b>Trône</b> : vous ${tc(o)}/7 · adversaire ${tc(1-o)}/7 (4 requis)</div>${bad.length?`<div>Mal placées : ${bad.map(nm).join(", ")}</div>`:""}<div style="color:var(--mut)"><i style="display:inline-block;width:11px;height:11px;background:#ff2d2d;border-radius:2px"></i> en danger (flèches rouges = menaces) · <i style="display:inline-block;width:11px;height:11px;background:#19e06a;border-radius:2px"></i> capturable · <i style="display:inline-block;width:11px;height:11px;background:#ffd21f;border-radius:2px"></i> pièce à jouer et destination. Points verts : déplacement sûr, orange : risqué.</div></div>`}}}
+function snap(){hist.push(JSON.stringify({P,B,turn,ply,dom,log,lost}));if(hist.length>300)hist.shift()}
+function undo(){if(!hist.length||(ai&&turn==1&&!win))return;let x;do{x=JSON.parse(hist.pop())}while(ai&&x.turn==1&&hist.length);ver++;P=x.P;B=x.B;turn=x.turn;ply=x.ply;dom=x.dom;log=x.log;lost=x.lost;win=null;sel=null;mode="move";hint=null;last=null;draw()}
+const tray=o=>lost[o].map(t=>`<img src="${IM[(o?"b":"w")+t]}" width="14" alt="">`).join("")||"aucune";
+function rec(){if(!ai||train)return;try{const s0=JSON.parse(localStorage.getItem("hexaflux-stats")||'{"w":0,"l":0,"s":0}');if(win.w==0){s0.w++;s0.s++}else{s0.l++;s0.s=0}localStorage.setItem("hexaflux-stats",JSON.stringify(s0))}catch(e){}}
+function stats(){try{const s0=JSON.parse(localStorage.getItem("hexaflux-stats")||"null");return s0?`Bilan contre l’IA : ${s0.w} V – ${s0.l} D · série ${s0.s}`:"Bilan contre l’IA : aucune partie"}catch(e){return ""}}
+function moves(o){const r=[];for(const s of P.filter(p=>p.o==o))for(const t of reach(s))r.push({s:s.id,q:t.q,r:t.r,a:t.a});return r}
+function apply(m){const s=P.find(x=>x.id==m.s);if(m.a){const x=at(m.q,m.r),a=atkP(s,x),d=defP(x);if(a>d){P=P.filter(y=>y!==x);s.q=m.q;s.r=m.r}else if(a<d)P=P.filter(y=>y!==s)}else{s.q=m.q;s.r=m.r}}
+function ev(o){let t=0;for(const p of P)t+=(p.o==o?1:-1)*(val(p)+(p.t=="Roi"?150:0)+(CEN.includes(k(p.q,p.r))?1.5:0));return t}
+function search(o,d,nz){let best=null,bs=-1e9;for(const m of moves(o)){const sv=P;P=P.map(x=>({...x}));apply(m);let sc;if(d>1){const rs=moves(1-o);let w=rs.length?1e9:ev(o);for(const r of rs){const s2=P;P=P.map(x=>({...x}));apply(r);const e=ev(o);P=s2;if(e<w)w=e}sc=w}else sc=ev(o);P=sv;sc+=RN()*nz;if(sc>bs){bs=sc;best=m}}return best}
+function archPlay(){const a=P.find(p=>p.o==1&&p.t=="Architecte");if(!a)return 0;let b=null,g=5;for(const x of P)if(x!==a&&x.t!="Roi"&&!x.inv&&dist(x.q,x.r,a)==1){const v=val(x),gg=x.o==1?-2*v:2*v;if(gg>g){g=gg;b=x}}if(!b)return 0;aiAct=1;sel=a.id;mode="arch";click(b.q,b.r);aiAct=0;return 1}
+function aiPlay(){if(win||!ai||turn!=1)return;if((train||lvl>0)&&archPlay())return;const[d,nz]=train?[1,6]:[[1,6],[2,1.5],[2,0]][lvl];const m=search(1,d,nz);if(!m){end();return}aiAct=1;sel=m.s;mode="move";click(m.q,m.r);aiAct=0}
+nw.onclick=()=>ask("new",()=>init());rv.onclick=()=>ask("rv",()=>init(seed));dj.onclick=()=>ask("dj",()=>{const d=new Date();init(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())});un.onclick=()=>{if(!hist.length){toast("Rien à annuler.");return}if(ai&&turn==1&&!win){toast("Patientez : l’IA joue…");return}undo()};
+const L=["Lire le terrain : les cases colorées sont au centre, entre les deux armées (les camps de départ sont neutres). Seule la valeur réelle (pastille sur la pièce) compte. Chaque point de déplacement affiche →N, la valeur après le coup.","Multiplicateur ×2/×3 (ambre) : posez-y vos pièces fortes. Un Titan (8) sur ×3 vaut 24.","Additionneur + (vert) : idéal pour une pièce faible. Un Éclaireur (2) sur +4 vaut 6.","Soustracteur − (violet) : à éviter ; attirez l’ennemi dessus. Un Titan (8) sur −4 ne vaut plus que 4.","Diviseur ÷ (cyan) : il écrase surtout les grosses pièces. Un Titan (8) sur ÷3 ne vaut que 2.","Attaque : la plus grande valeur réelle gagne. Si vous perdez, la pièce est détruite ; à égalité, elle est repoussée. Montez sur une bonne case, puis attaquez au tour suivant.","Progression : plus une pièce avance en zone adverse, plus elle gagne de points (+1, +2, +3, chiffres sur les bords). Le bonus est ajouté avant la case : un multiplicateur le multiplie !","Trône : tenez au moins 4 des 7 cases en pointillés pendant 2 tours, ou cumulez plus de 40 de puissance dessus, sans toucher au Roi.","Le terrain change : chaque partie est différente, et toutes les 8 actions deux cases libres échangent leur effet. Relisez le plateau.","Architecte : son pouvoir inverse le signe d’une pièce voisine (hors Roi) pendant 3 actions. Un Titan à 8 devient −8 et se capture facilement ; une pièce négative sur un soustracteur redevient positive.","Soutien d’équipe : chaque allié collé à la cible (ou au défenseur) ajoute +1, jusqu’à +2. Avancez en groupe : une pièce entourée d’alliés est bien plus difficile à capturer."];
+let pend=null,ptm=0;
+function toast(m){ts.textContent=m;ts.style.display="block";clearTimeout(ptm);ptm=setTimeout(()=>{ts.style.display="none";pend=null},3200)}
+function ask(key,fn,msg){if(!ply||win){fn();return}mt.textContent=msg||"La partie en cours sera perdue. Continuer ?";mo.style.display="flex";my.onclick=()=>{mo.style.display="none";fn()};mn.onclick=()=>{mo.style.display="none"}}
+function setLvl(i){lvl=i;draw();toast("Niveau de l’IA : "+["Facile","Normal","Fort"][i])}
+function setVs(v){const cur=!ai?"pvp":train?"train":"ia";if(v==cur)return;ask("vs"+v,()=>{ai=v!="pvp";train=v=="train"?1:0;init();if(ai&&turn==1)setTimeout(aiPlay,400)},"Changer de mode relance une nouvelle partie (nouveau terrain). Continuer ?")}
+function proj(p,q,r){const a=p.q,b=p.r;p.q=q;p.r=r;const v=val(p);p.q=a;p.r=b;return v}
+function advise(){const m=search(0,2,0);if(!m)return;const s=P.find(x=>x.id==m.s),x=at(m.q,m.r);hint={fr:[s.q,s.r],to:[m.q,m.r],why:m.a?`${s.t} (${val(s)}) attaque ${x.t} (${val(x)}) : ${val(s)>val(x)?"capture":"à égalité, repoussé"}.`:`${s.t} va sur une case où il vaudra ${proj(s,m.q,m.r)} (meilleur coup sur 2 tours).`};draw()}
+const LEG=()=>lg.innerHTML=Object.entries(T).map(([c,v])=>`<svg viewBox="0 0 20 20" width="18"><rect width="20" height="20" rx="4" class="${c}"/></svg><span><b>${v[0]}</b> ${v[1]} — ${v[2]}</span>`).join("")+`${[["Roi","Roi 6, immobile"],["Titan","Titan 8"+(uni?", 1–2 cases":", 1 case")],["Gardien","Gardien 5"+(uni?", 1–2 cases":", 1 case")],["Assassin","Assassin 3"+(uni?", 1–2 cases":", 2 cases en ligne")],["Eclaireur","Éclaireur 2"+(uni?", 1–2 cases":", jusqu’à 3 cases")],["Arcaniste","Arcaniste 4"+(uni?", 1–2 cases":", 2 cases")],["Architecte","Architecte 1"+(uni?", 1–2 cases":", 1 case")+" · inverse le signe d’une pièce voisine"]].map(([t,s])=>`<img src="${IM["b"+t]}" width="20" alt=""><span>${s}</span>`).join("")}<span></span><span> Progression : +1, +2, +3 aux 3 lignes de la zone adverse (Bleus : bord gauche, haut ; Rouges : bord droit, bas), ajouté avant l’effet de la case.</span>`;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b||b.tagName=="INPUT")return;const a=b.dataset.a,v=b.dataset.v;
+ if(a=="vs")setVs(v);else if(a=="lvl")setLvl(+v);else if(a=="uni")setUni(+v);else if(a=="advise")advise();else if(a=="ls"){ls=(ls+1)%L.length;draw()}else if(a=="arch"){mode=mode=="arch"?"move":"arch";draw()}});
+document.addEventListener("change",e=>{const b=e.target,a=b.dataset&&b.dataset.a;if(a=="bar"){bar=b.checked?1:0;draw()}else if(a=="help"){help=b.checked?1:0;draw()}else if(a=="sup"){sup=b.checked?1:0;ver++;draw()}});
+function advL(){if(advV==ver)return advC;if(!advT)advT=setTimeout(()=>{advT=0;if(!win&&!(ai&&turn==1)){adv();draw()}},40);return null}
+const _d=draw;draw=function(){_d();sv()};
+function sv(){try{localStorage.setItem("hx-save",JSON.stringify({P,B,turn,ply,dom,log,lost,seed,ai,train,lvl,uni,help,sup,bar,win}))}catch(e){}}
+function ld(){try{const x=JSON.parse(localStorage.getItem("hx-save")||"null");if(!x||!x.P)return 0;
+ai=x.ai;train=x.train;lvl=x.lvl;uni=x.uni;help=x.help;sup=x.sup;bar=x.bar;cbBar.checked=!!bar;cbHelp.checked=!!help;cbSup.checked=!!sup;LEG();
+if(x.win)return 0;({P,B,turn,ply,dom,log,lost,seed}=x);win=null;RN=mb(seed+ply);sel=null;mode="move";hint=null;last=null;hist=[];evH=[];ver++;draw();if(ai&&turn==1)setTimeout(aiPlay,500);return 1}catch(e){return 0}}
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
+LEG();ld()||init();
+</script></body></html>
